@@ -1,99 +1,163 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <title>Würfelpaare und Summen</title>
+  <meta charset="UTF-8" />
+  <title>Drehbare Würfel + Paarsummen (5. Würfel schwarz)</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 2em; }
-    input { width: 2em; }
-    #dice5 { background-color: #ffe680; font-weight: bold; } /* 5. Würfel hervorheben */
-    #result { margin-top: 1em; white-space: pre; }
-    .pasch { color: red; font-weight: bold; } /* Pasch-Markierung */
+    body { font-family: Arial, sans-serif; margin: 2em; text-align: center; }
+    .dice-row { display: flex; gap: 22px; justify-content: center; margin-bottom: 22px; }
+    .scene { width: 64px; height: 64px; perspective: 700px; }
+    .dice {
+      width: 64px; height: 64px;
+      position: relative; transform-style: preserve-3d;
+      transition: transform 900ms cubic-bezier(.2,.7,.2,1);
+      margin: 0 auto;
+    }
+    .face {
+      position: absolute; width: 64px; height: 64px;
+      background: #fff; border: 2px solid #222; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font: 700 20px/1 system-ui, Arial, sans-serif;
+      box-shadow: inset 0 0 20px rgba(0,0,0,.06);
+    }
+    /* Flächen positionieren (Kantenlänge 64 -> translateZ 32) */
+    .front  { transform: rotateY(0deg)   translateZ(32px); }
+    .back   { transform: rotateY(180deg) translateZ(32px); }
+    .right  { transform: rotateY(90deg)  translateZ(32px); }
+    .left   { transform: rotateY(-90deg) translateZ(32px); }
+    .top    { transform: rotateX(90deg)  translateZ(32px); }
+    .bottom { transform: rotateX(-90deg) translateZ(32px); }
+
+    /* 5. Würfel schwarz mit weißer Zahl */
+    .is-fifth .face {
+      background: #000;
+      color: #fff;
+      border: 2px solid #fff;
+    }
+
+    button { margin-top: 10px; padding: 10px 18px; font-size: 16px; cursor: pointer; }
+    #values { margin-top: 12px; font-weight: 600; }
+    #result { margin-top: 24px; white-space: pre-line; text-align: left; display: inline-block; }
+    .pasch { color: #d00; font-weight: 800; }
   </style>
 </head>
 <body>
-  <h1>Paarsummen mit 4 und 5 Würfeln</h1>
-  <p>Gib die Augenzahlen der 5 Würfel ein (der 5. Würfel ist hervorgehoben):</p>
-  <input type="number" id="dice1" min="1" max="6" value="1">
-  <input type="number" id="dice2" min="1" max="6" value="1">
-  <input type="number" id="dice3" min="1" max="6" value="1">
-  <input type="number" id="dice4" min="1" max="6" value="1">
-  <input type="number" id="dice5" min="1" max="6" value="1">
-  <button onclick="calcSums()">Berechnen</button>
+  <h1>Paarsummen mit drehbaren Würfeln</h1>
+
+  <div class="dice-row">
+    <div class="scene"><div class="dice" id="d1"></div></div>
+    <div class="scene"><div class="dice" id="d2"></div></div>
+    <div class="scene"><div class="dice" id="d3"></div></div>
+    <div class="scene"><div class="dice" id="d4"></div></div>
+    <div class="scene"><div class="dice is-fifth" id="dice5"></div></div>
+  </div>
+
+  <button onclick="rollAndCalc()">Würfeln + Berechnen</button>
+  <div id="values"></div>
   <div id="result"></div>
 
   <script>
-    function getAllPairSplits(arr) {
-      let splits = [];
-      for(let i=0; i<arr.length; i++) {
-        for(let j=i+1; j<arr.length; j++) {
-          for(let k=0; k<arr.length; k++) {
-            if(k===i || k===j) continue;
-            for(let l=k+1; l<arr.length; l++) {
-              if(l===i || l===j) continue;
-              let pair1 = [arr[i], arr[j]];
-              let pair2 = [arr[k], arr[l]];
-              let key = [...pair1].sort().join('-') + "|" + [...pair2].sort().join('-');
-              let revkey = [...pair2].sort().join('-') + "|" + [...pair1].sort().join('-');
-              if(!splits.some(e=>e.key===key || e.key===revkey)) {
-                splits.push({pair1: [...pair1], pair2: [...pair2], key});
+    // ---------- Würfel aufbauen ----------
+    function createDice(id) {
+      const dice = document.getElementById(id);
+      const faces = ['front','back','right','left','top','bottom'];
+      const labels = [1, 2, 3, 4, 5, 6]; // Zahl pro Fläche
+      for (let i = 0; i < 6; i++) {
+        const div = document.createElement('div');
+        div.className = "face " + faces[i];
+        div.textContent = labels[i];
+        dice.appendChild(div);
+      }
+      dice.style.transform = "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
+    }
+    ['d1','d2','d3','d4','dice5'].forEach(createDice);
+
+    // ---------- Orientierung: gewünschte Zahl nach VORN ----------
+    function orientationForFrontValue(v) {
+      switch (v) {
+        case 1: return { x: 0,   y: 0,   z: 0   };
+        case 2: return { x: 0,   y: 180, z: 0   };
+        case 3: return { x: 0,   y: -90, z: 0   };
+        case 4: return { x: 0,   y: 90,  z: 0   };
+        case 5: return { x: -90, y: 0,   z: 0   };
+        case 6: return { x: 90,  y: 0,   z: 0   };
+        default: return { x: 0, y: 0, z: 0 };
+      }
+    }
+    function extraSpins() {
+      const r = () => 360 * Math.floor(Math.random()*3);
+      return { x: r(), y: r(), z: r() };
+    }
+    function animateDiceToValue(id, value) {
+      const el = document.getElementById(id);
+      const base = orientationForFrontValue(value);
+      const add  = extraSpins();
+      el.style.transform = `rotateX(${base.x + add.x}deg) rotateY(${base.y + add.y}deg) rotateZ(${base.z + add.z}deg)`;
+    }
+
+    // ---------- Hilfen ----------
+    function rollValues(n) {
+      return Array.from({length: n}, () => 1 + Math.floor(Math.random()*6));
+    }
+
+    function getSplits(arr) {
+      const n = arr.length, out = [], seen = new Set();
+      for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+          for (let k = 0; k < n; k++) {
+            if (k === i || k === j) continue;
+            for (let l = k + 1; l < n; l++) {
+              if (l === i || l === j) continue;
+              const pair1 = [arr[i], arr[j]], pair2 = [arr[k], arr[l]];
+              const p1k = [...pair1].sort((a,b)=>a-b).join('-');
+              const p2k = [...pair2].sort((a,b)=>a-b).join('-');
+              const key = [p1k, p2k].sort().join('|');
+              if (!seen.has(key)) {
+                seen.add(key);
+                out.push({ pair1, pair2, key, idx: { pair1:[i,j], pair2:[k,l] } });
               }
             }
           }
         }
       }
-      return splits;
-    }
-
-    function calcSums() {
-      let arr4 = [
-        Number(document.getElementById('dice1').value),
-        Number(document.getElementById('dice2').value),
-        Number(document.getElementById('dice3').value),
-        Number(document.getElementById('dice4').value)
-      ];
-      let arr5 = [...arr4, Number(document.getElementById('dice5').value)];
-
-      let splits4 = getAllPairSplits(arr4);
-      let splits5 = getAllPairSplits(arr5);
-
-      // Keys der ersten Liste merken
-      let keys4 = new Set(splits4.map(s => s.key));
-
-      // Liste 2: nur neue Kombinationen, die nicht in Liste 1 enthalten sind
-      let splits5unique = splits5.filter(s => !keys4.has(s.key));
-
-      let resultText = "<b>Liste 1 (nur Würfel 1-4):</b><br>" +
-                       formatSplits(splits4) + "<br><br>";
-
-      resultText += "<b>Liste 2 (zusätzlich durch Würfel 5):</b><br>" +
-                    formatSplits(splits5unique);
-
-      document.getElementById("result").innerHTML = resultText;
+      return out;
     }
 
     function formatSplits(splits) {
       let text = '';
-      splits.forEach(split => {
-        let sum1 = split.pair1[0] + split.pair1[1];
-        let sum2 = split.pair2[0] + split.pair2[1];
-
-        if(sum1 >= 2 && sum1 <= 12 && sum2 >= 2 && sum2 <= 12) {
-          let pair1Text = `(${split.pair1[0]},${split.pair1[1]})`;
-          let pair2Text = `(${split.pair2[0]},${split.pair2[1]})`;
-
-          // Pasche markieren
-          if(split.pair1[0] === split.pair1[1]) {
-            pair1Text = `<span class="pasch">${pair1Text}</span>`;
-          }
-          if(split.pair2[0] === split.pair2[1]) {
-            pair2Text = `<span class="pasch">${pair2Text}</span>`;
-          }
-
-          text += `${pair1Text} & ${pair2Text}: ${sum1}, ${sum2}<br>`;
-        }
+      splits.forEach(s => {
+        const sum1 = s.pair1[0] + s.pair1[1];
+        const sum2 = s.pair2[0] + s.pair2[1];
+        let p1 = `(${s.pair1[0]},${s.pair1[1]})`;
+        let p2 = `(${s.pair2[0]},${s.pair2[1]})`;
+        if (s.pair1[0] === s.pair1[1]) p1 = `<span class="pasch">${p1}</span>`;
+        if (s.pair2[0] === s.pair2[1]) p2 = `<span class="pasch">${p2}</span>`;
+        text += `${p1} & ${p2}: ${sum1}, ${sum2}\n`;
       });
       return text;
+    }
+
+    // ---------- Hauptaktion ----------
+    function rollAndCalc() {
+      const values = rollValues(5);
+      ['d1','d2','d3','d4','dice5'].forEach((id, idx) => animateDiceToValue(id, values[idx]));
+
+      document.getElementById("values").textContent = "Ergebnisse: " + values.join(", ");
+
+      const arr4 = values.slice(0,4);
+      const arr5 = values.slice();
+      const splits4 = getSplits(arr4);
+      const set4    = new Set(splits4.map(s => s.key));
+      const splits5all = getSplits(arr5);
+
+      const splits5unique = splits5all.filter(s => {
+        const uses5 = s.idx.pair1.includes(4) || s.idx.pair2.includes(4);
+        return uses5 && !set4.has(s.key);
+      });
+
+      let resultText  = "<b>Liste 1 (nur Würfel 1–4):</b>\n" + formatSplits(splits4) + "\n\n";
+      resultText     += "<b>Liste 2 (zusätzlich durch Würfel 5):</b>\n" + formatSplits(splits5unique);
+      document.getElementById("result").innerHTML = resultText;
     }
   </script>
 </body>
