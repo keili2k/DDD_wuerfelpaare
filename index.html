@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Würfelpaare und Summen</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2em; }
+    input { width: 2em; }
+    #dice5 { background-color: #ffe680; font-weight: bold; } /* 5. Würfel hervorheben */
+    #result { margin-top: 1em; white-space: pre; }
+    .pasch { color: red; font-weight: bold; } /* Pasch-Markierung */
+  </style>
+</head>
+<body>
+  <h1>Paarsummen mit 4 und 5 Würfeln</h1>
+  <p>Gib die Augenzahlen der 5 Würfel ein (der 5. Würfel ist hervorgehoben):</p>
+  <input type="number" id="dice1" min="1" max="6" value="1">
+  <input type="number" id="dice2" min="1" max="6" value="1">
+  <input type="number" id="dice3" min="1" max="6" value="1">
+  <input type="number" id="dice4" min="1" max="6" value="1">
+  <input type="number" id="dice5" min="1" max="6" value="1">
+  <button onclick="calcSums()">Berechnen</button>
+  <div id="result"></div>
+
+  <script>
+    function getAllPairSplits(arr) {
+      let splits = [];
+      for(let i=0; i<arr.length; i++) {
+        for(let j=i+1; j<arr.length; j++) {
+          for(let k=0; k<arr.length; k++) {
+            if(k===i || k===j) continue;
+            for(let l=k+1; l<arr.length; l++) {
+              if(l===i || l===j) continue;
+              let pair1 = [arr[i], arr[j]];
+              let pair2 = [arr[k], arr[l]];
+              let key = [...pair1].sort().join('-') + "|" + [...pair2].sort().join('-');
+              let revkey = [...pair2].sort().join('-') + "|" + [...pair1].sort().join('-');
+              if(!splits.some(e=>e.key===key || e.key===revkey)) {
+                splits.push({pair1: [...pair1], pair2: [...pair2], key});
+              }
+            }
+          }
+        }
+      }
+      return splits;
+    }
+
+    function calcSums() {
+      let arr4 = [
+        Number(document.getElementById('dice1').value),
+        Number(document.getElementById('dice2').value),
+        Number(document.getElementById('dice3').value),
+        Number(document.getElementById('dice4').value)
+      ];
+      let arr5 = [...arr4, Number(document.getElementById('dice5').value)];
+
+      let splits4 = getAllPairSplits(arr4);
+      let splits5 = getAllPairSplits(arr5);
+
+      // Keys der ersten Liste merken
+      let keys4 = new Set(splits4.map(s => s.key));
+
+      // Liste 2: nur neue Kombinationen, die nicht in Liste 1 enthalten sind
+      let splits5unique = splits5.filter(s => !keys4.has(s.key));
+
+      let resultText = "<b>Liste 1 (nur Würfel 1-4):</b><br>" +
+                       formatSplits(splits4) + "<br><br>";
+
+      resultText += "<b>Liste 2 (zusätzlich durch Würfel 5):</b><br>" +
+                    formatSplits(splits5unique);
+
+      document.getElementById("result").innerHTML = resultText;
+    }
+
+    function formatSplits(splits) {
+      let text = '';
+      splits.forEach(split => {
+        let sum1 = split.pair1[0] + split.pair1[1];
+        let sum2 = split.pair2[0] + split.pair2[1];
+
+        if(sum1 >= 2 && sum1 <= 12 && sum2 >= 2 && sum2 <= 12) {
+          let pair1Text = `(${split.pair1[0]},${split.pair1[1]})`;
+          let pair2Text = `(${split.pair2[0]},${split.pair2[1]})`;
+
+          // Pasche markieren
+          if(split.pair1[0] === split.pair1[1]) {
+            pair1Text = `<span class="pasch">${pair1Text}</span>`;
+          }
+          if(split.pair2[0] === split.pair2[1]) {
+            pair2Text = `<span class="pasch">${pair2Text}</span>`;
+          }
+
+          text += `${pair1Text} & ${pair2Text}: ${sum1}, ${sum2}<br>`;
+        }
+      });
+      return text;
+    }
+  </script>
+</body>
+</html>
