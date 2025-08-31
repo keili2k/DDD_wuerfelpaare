@@ -42,19 +42,15 @@
   </style>
 </head>
 <body>
-  <h1>Paarsummen mit drehbaren Würfeln</h1>
-
-  <div class="dice-row">
+  <div class="dice-row" onclick="rollAndCalc()">
     <div class="scene"><div class="dice" id="d1"></div></div>
     <div class="scene"><div class="dice" id="d2"></div></div>
     <div class="scene"><div class="dice" id="d3"></div></div>
     <div class="scene"><div class="dice" id="d4"></div></div>
     <div class="scene"><div class="dice is-fifth" id="dice5"></div></div>
   </div>
-
-  <button onclick="rollAndCalc()">Würfeln + Berechnen</button>
-  <div id="values"></div>
-  <div id="result"></div>
+  <div id="values" style="display:none;"></div>
+  <div id="result" style="display:none;"></div>
 
   <script>
     // ---------- Würfel aufbauen ----------
