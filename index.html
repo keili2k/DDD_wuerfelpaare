@@ -2,25 +2,49 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <title>Drehbare Würfel + Paarsummen (5. Würfel schwarz)</title>
+  <title>Drehbare Würfel + Paarsummen</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 2em; text-align: center; }
-    .dice-row { display: flex; gap: 22px; justify-content: center; margin-bottom: 22px; }
-    .scene { width: 64px; height: 64px; perspective: 700px; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2em;
+      text-align: center;
+    }
+
+    .dice-row {
+      display: flex;
+      gap: 22px;
+      justify-content: center;
+      margin-bottom: 22px;
+    }
+
+    .scene {
+      width: 64px;
+      height: 64px;
+      perspective: 700px;
+    }
+
     .dice {
-      width: 64px; height: 64px;
-      position: relative; transform-style: preserve-3d;
+      width: 64px;
+      height: 64px;
+      position: relative;
+      transform-style: preserve-3d;
       transition: transform 900ms cubic-bezier(.2,.7,.2,1);
       margin: 0 auto;
     }
+
     .face {
-      position: absolute; width: 64px; height: 64px;
-      background: #fff; border: 2px solid #222; border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font: 700 20px/1 system-ui, Arial, sans-serif;
+      position: absolute;
+      width: 64px;
+      height: 64px;
+      background: #fff;
+      border: 2px solid #222;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       box-shadow: inset 0 0 20px rgba(0,0,0,.06);
     }
-    /* Flächen positionieren (Kantenlänge 64 -> translateZ 32) */
+
     .front  { transform: rotateY(0deg)   translateZ(32px); }
     .back   { transform: rotateY(180deg) translateZ(32px); }
     .right  { transform: rotateY(90deg)  translateZ(32px); }
@@ -28,53 +52,63 @@
     .top    { transform: rotateX(90deg)  translateZ(32px); }
     .bottom { transform: rotateX(-90deg) translateZ(32px); }
 
-    /* 5. Würfel schwarz mit weißer Zahl */
     .is-fifth .face {
       background: #000;
       color: #fff;
       border: 2px solid #fff;
     }
 
-    button { margin-top: 10px; padding: 10px 18px; font-size: 16px; cursor: pointer; }
-    #values { margin-top: 12px; font-weight: 600; }
-    #result { margin-top: 24px; white-space: pre-line; text-align: left; display: inline-block; }
-    .pasch { color: #d00; font-weight: 800; }
     .pip {
-  width: 10px;
-  height: 10px;
-  background: currentColor;
-  border-radius: 50%;
-  position: absolute;
-}
+      width: 10px;
+      height: 10px;
+      background: currentColor;
+      border-radius: 50%;
+      position: absolute;
+    }
 
-.face {
-  position: absolute;
-  width: 64px;
-  height: 64px;
-  background: #fff;
-  border: 2px solid #222;
-  border-radius: 8px;
-  box-shadow: inset 0 0 20px rgba(0,0,0,.06);
-  color: #000; /* für schwarze Punkte */
-}
+    /* Zentrierte Pip-Positionen */
+    .p1 { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    .p2 { top: 25%; left: 25%; transform: translate(-50%, -50%); }
+    .p3 { top: 75%; left: 75%; transform: translate(-50%, -50%); }
+    .p4 { top: 25%; left: 75%; transform: translate(-50%, -50%); }
+    .p5 { top: 75%; left: 25%; transform: translate(-50%, -50%); }
+    .p6 { top: 50%; left: 25%; transform: translate(-50%, -50%); }
+    .p7 { top: 50%; left: 75%; transform: translate(-50%, -50%); }
 
-.is-fifth .face {
-  background: #000;
-  color: #fff; /* weiße Punkte */
-  border: 2px solid #fff;
-}
-#list2.show {
-  opacity: 1;
-  max-height: 1000px; /* groß genug für Inhalt */
-}
-/* Zentrierte Pip-Positionen */
-.p1 { top: 50%; left: 50%; transform: translate(-50%, -50%); }
-.p2 { top: 25%; left: 25%; transform: translate(-50%, -50%); }
-.p3 { top: 75%; left: 75%; transform: translate(-50%, -50%); }
-.p4 { top: 25%; left: 75%; transform: translate(-50%, -50%); }
-.p5 { top: 75%; left: 25%; transform: translate(-50%, -50%); }
-.p6 { top: 50%; left: 25%; transform: translate(-50%, -50%); }
-.p7 { top: 50%; left: 75%; transform: translate(-50%, -50%); }
+    button {
+      margin-top: 10px;
+      padding: 10px 18px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    #values {
+      margin-top: 12px;
+      font-weight: 600;
+    }
+
+    #result {
+      margin-top: 24px;
+      text-align: left;
+      display: inline-block;
+    }
+
+    .pasch {
+      color: #d00;
+      font-weight: 800;
+    }
+
+    #list2 {
+      opacity: 0;
+      max-height: 0;
+      overflow: hidden;
+      transition: opacity 0.6s ease, max-height 0.6s ease;
+    }
+
+    #list2.show {
+      opacity: 1;
+      max-height: 1000px;
+    }
   </style>
 </head>
 <body>
@@ -85,49 +119,52 @@
     <div class="scene"><div class="dice" id="d4"></div></div>
     <div class="scene"><div class="dice is-fifth" id="dice5"></div></div>
   </div>
-  <div id="values" style="display:none;"></div>
+
   <label>
-  <input type="checkbox" id="toggleFifth" checked />
-  Kombinationen des 5. Würfel ausblenden
+    <input type="checkbox" id="toggleFifth" checked />
+    Kombinationen des 5. Würfel ausblenden
   </label>
+
+  <div id="values" style="display:none;"></div>
   <div id="result">
-  <div id="list1"></div>
-  <div id="list2" style="opacity: 0; max-height: 0; overflow: hidden; transition: opacity 0.6s ease, max-height 0.6s ease;"></div>
+    <div id="list1"></div>
+    <div id="list2"></div>
   </div>
 
   <script>
-    // ---------- Würfel aufbauen ---------
+    let lastValues = [];
+    let lastSplits5unique = [];
+
     function createDice(id) {
-  const dice = document.getElementById(id);
-  const faces = ['front','back','right','left','top','bottom'];
-  const pipsMap = {
-    1: [['p1']],
-    2: [['p2'], ['p3']],
-    3: [['p2'], ['p1'], ['p3']],
-    4: [['p2'], ['p4'], ['p5'], ['p3']],
-    5: [['p2'], ['p4'], ['p1'], ['p5'], ['p3']],
-    6: [['p2'], ['p4'], ['p5'], ['p3'], ['p6'], ['p7']]
-  };
+      const dice = document.getElementById(id);
+      const faces = ['front','back','right','left','top','bottom'];
+      const pipsMap = {
+        1: [['p1']],
+        2: [['p2'], ['p3']],
+        3: [['p2'], ['p1'], ['p3']],
+        4: [['p2'], ['p4'], ['p5'], ['p3']],
+        5: [['p2'], ['p4'], ['p1'], ['p5'], ['p3']],
+        6: [['p2'], ['p4'], ['p5'], ['p3'], ['p6'], ['p7']]
+      };
 
-  for (let i = 0; i < 6; i++) {
-    const value = i + 1;
-    const div = document.createElement('div');
-    div.className = "face " + faces[i];
+      for (let i = 0; i < 6; i++) {
+        const value = i + 1;
+        const div = document.createElement('div');
+        div.className = "face " + faces[i];
 
-    // Pips hinzufügen
-    pipsMap[value].forEach(clsArr => {
-      const pip = document.createElement('div');
-      pip.className = 'pip ' + clsArr.join(' ');
-      div.appendChild(pip);
-    });
+        pipsMap[value].forEach(clsArr => {
+          const pip = document.createElement('div');
+          pip.className = 'pip ' + clsArr.join(' ');
+          div.appendChild(pip);
+        });
 
-    dice.appendChild(div);
-  }
-  dice.style.transform = "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
+        dice.appendChild(div);
+      }
+      dice.style.transform = "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
     }
+
     ['d1','d2','d3','d4','dice5'].forEach(createDice);
 
-    // ---------- Orientierung: gewünschte Zahl nach VORN ----------
     function orientationForFrontValue(v) {
       switch (v) {
         case 1: return { x: 0,   y: 0,   z: 0   };
@@ -139,10 +176,12 @@
         default: return { x: 0, y: 0, z: 0 };
       }
     }
+
     function extraSpins() {
       const r = () => 360 * Math.floor(Math.random()*3);
       return { x: r(), y: r(), z: r() };
     }
+
     function animateDiceToValue(id, value) {
       const el = document.getElementById(id);
       const base = orientationForFrontValue(value);
@@ -150,7 +189,6 @@
       el.style.transform = `rotateX(${base.x + add.x}deg) rotateY(${base.y + add.y}deg) rotateZ(${base.z + add.z}deg)`;
     }
 
-    // ---------- Hilfen ----------
     function rollValues(n) {
       return Array.from({length: n}, () => 1 + Math.floor(Math.random()*6));
     }
@@ -192,42 +230,21 @@
       return text;
     }
 
-    // ---------- Hauptaktion ----------
-    function rollAndCalc() {
-      const values = rollValues(5);
-      ['d1','d2','d3','d4','dice5'].forEach((id, idx) => animateDiceToValue(id, values[idx]));
+    function updateFifthDisplay() {
+      const list2 = document.getElementById("list2");
+      const showFifth = !document.getElementById("toggleFifth").checked;
 
-      document.getElementById("values").textContent = "Ergebnisse: " + values.join(", ");
-
-      const arr4 = values.slice(0,4);
-      const arr5 = values.slice();
-      const splits4 = getSplits(arr4);
-      const set4    = new Set(splits4.map(s => s.key));
-      const splits5all = getSplits(arr5);
-
-      const splits5unique = splits5all.filter(s => {
-        const uses5 = s.idx.pair1.includes(4) || s.idx.pair2.includes(4);
-        return uses5 && !set4.has(s.key);
-      });
-
-      let resultText  = "<b>Liste 1 (nur Würfel 1–4):</b>\n" + formatSplits(splits4) + "\n\n";
-      resultText     += "<b>Liste 2 (zusätzlich durch Würfel 5):</b>\n" + formatSplits(splits5unique);
-      
-      document.getElementById("list1").innerHTML =
-  "<b>Liste 1 (nur Würfel 1–4):</b>\n" + formatSplits(splits4);
-
-const list2 = document.getElementById("list2");
-const showFifth = !document.getElementById("toggleFifth").checked;
-
-if (showFifth) {
-  list2.innerHTML =
-    "<b>Liste 2 (zusätzlich durch Würfel 5):</b>\n" + formatSplits(splits5unique);
-  list2.classList.add("show");
-} else {
-  list2.classList.remove("show");
-  list2.innerHTML = "";
-}
+      if (showFifth && lastSplits5unique.length > 0) {
+        list2.innerHTML =
+          "<b>Liste 2 (zusätzlich durch Würfel 5):</b>\n" + formatSplits(lastSplits5unique);
+        list2.classList.add("show");
+      } else {
+        list2.classList.remove("show");
+        list2.innerHTML = "";
+      }
     }
+
+    document.getElementById("toggleFifth").addEventListener("change", updateFifthDisplay);
   </script>
 </body>
 </html>
