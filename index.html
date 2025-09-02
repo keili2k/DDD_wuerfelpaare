@@ -63,7 +63,10 @@
   color: #fff; /* weiße Punkte */
   border: 2px solid #fff;
 }
-
+#list2.show {
+  opacity: 1;
+  max-height: 1000px; /* groß genug für Inhalt */
+}
 /* Zentrierte Pip-Positionen */
 .p1 { top: 50%; left: 50%; transform: translate(-50%, -50%); }
 .p2 { top: 25%; left: 25%; transform: translate(-50%, -50%); }
@@ -83,7 +86,14 @@
     <div class="scene"><div class="dice is-fifth" id="dice5"></div></div>
   </div>
   <div id="values" style="display:none;"></div>
-  <div id="result"></div>
+  <label>
+  <input type="checkbox" id="toggleFifth" checked />
+  Kombinationen des 5. Würfel ausblenden
+  </label>
+  <div id="result">
+  <div id="list1"></div>
+  <div id="list2" style="opacity: 0; max-height: 0; overflow: hidden; transition: opacity 0.6s ease, max-height 0.6s ease;"></div>
+  </div>
 
   <script>
     // ---------- Würfel aufbauen ---------
@@ -202,7 +212,21 @@
 
       let resultText  = "<b>Liste 1 (nur Würfel 1–4):</b>\n" + formatSplits(splits4) + "\n\n";
       resultText     += "<b>Liste 2 (zusätzlich durch Würfel 5):</b>\n" + formatSplits(splits5unique);
-      document.getElementById("result").innerHTML = resultText;
+      
+      document.getElementById("list1").innerHTML =
+  "<b>Liste 1 (nur Würfel 1–4):</b>\n" + formatSplits(splits4);
+
+const list2 = document.getElementById("list2");
+const showFifth = !document.getElementById("toggleFifth").checked;
+
+if (showFifth) {
+  list2.innerHTML =
+    "<b>Liste 2 (zusätzlich durch Würfel 5):</b>\n" + formatSplits(splits5unique);
+  list2.classList.add("show");
+} else {
+  list2.classList.remove("show");
+  list2.innerHTML = "";
+}
     }
   </script>
 </body>
