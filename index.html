@@ -86,10 +86,36 @@
   opacity: 1;
   max-height: 1000px;
 }
-  
+  body.dark {
+  background-color: #121212;
+  color: #f0f0f0;
+}
+
+body.dark .face {
+  background: #333;
+  border-color: #888;
+  color: #f0f0f0;
+}
+
+body.dark .is-fifth .face {
+  background: #000;
+  border-color: #fff;
+  color: #fff;
+}
+
+body.dark .pip {
+  background: #f0f0f0;
+}
+
+button#toggleDark {
+  margin-bottom: 20px;
+}
+
+    
   </style>
 </head>
 <body>
+  <button id="toggleDark">Darkmode aktivieren</button>
   <div class="dice-row" onclick="rollAndCalc()">
     <div class="scene"><div class="dice" id="d1"></div></div>
     <div class="scene"><div class="dice" id="d2"></div></div>
@@ -97,11 +123,11 @@
     <div class="scene"><div class="dice" id="d4"></div></div>
     <div class="scene"><div class="dice is-fifth" id="dice5"></div></div>
   </div>
-  <div id="values" style="display:none;"></div>
-  <label>
+    <label>
   <input type="checkbox" id="toggleFifth" checked />
   Kombinationen des 5. Würfel ausblenden
-  </label>
+    </label>
+  <div id="values" style="display:none;"></div>
   <div id="result">
   <div id="list1"></div>
   <div id="list2"></div>
@@ -248,6 +274,17 @@ function updateFifthDisplay() {
     list2.innerHTML = "";
   }
 }
+
+  document.getElementById("toggleDark").addEventListener("click", () => {
+  document.body.classList.toggle("dark");
+
+  const btn = document.getElementById("toggleDark");
+  if (document.body.classList.contains("dark")) {
+    btn.textContent = "Darkmode deaktivieren";
+  } else {
+    btn.textContent = "Darkmode aktivieren";
+  }
+});
   </script>
 </body>
 </html>
