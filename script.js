@@ -104,7 +104,7 @@ function formatSplits(splits) {
     const pair1HTML = renderPair(leftPair, s.idx.pair1);
     const pair2HTML = renderPair(rightPair, s.idx.pair2);
 
-    text += `${pair1HTML} & ${pair2HTML}: ${sum1}, ${sum2}<br>`;
+    text += `${pair1HTML} &nbsp; ${pair2HTML}: ${sum1}, ${sum2}<br>`;
   });
 
   return text;
