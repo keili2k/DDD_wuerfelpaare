@@ -111,6 +111,33 @@ button#toggleDark {
   margin-bottom: 20px;
 }
 
+.mini-dice {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  background: #fff;
+  border: 1px solid #222;
+  border-radius: 6px;
+  display: inline-block;
+  margin: 0 4px;
+  box-shadow: inset 0 0 10px rgba(0,0,0,.06);
+}
+
+body.dark .mini-dice {
+  background: #333;
+  border-color: #888;
+}
+
+.is-fifth .mini-dice {
+  background: #000;
+  border-color: #fff;
+  color: #fff;
+}
+
+.mini-dice .pip {
+  width: 6px;
+  height: 6px;
+}
     
   </style>
 </head>
@@ -221,7 +248,6 @@ button#toggleDark {
     }
 
     function formatSplits(splits) {
-  // Sortiere die Splits nach der kleineren der beiden Summen
   splits.sort((a, b) => {
     const minA = Math.min(a.pair1[0] + a.pair1[1], a.pair2[0] + a.pair2[1]);
     const minB = Math.min(b.pair1[0] + b.pair1[1], b.pair2[0] + b.pair2[1]);
@@ -233,25 +259,42 @@ button#toggleDark {
     let sum1 = s.pair1[0] + s.pair1[1];
     let sum2 = s.pair2[0] + s.pair2[1];
 
-    // Stelle sicher, dass die kleinere Summe links steht
     let leftPair = s.pair1, rightPair = s.pair2;
     if (sum1 > sum2) {
       [leftPair, rightPair] = [rightPair, leftPair];
       [sum1, sum2] = [sum2, sum1];
     }
 
-    let p1 = `(${leftPair[0]},${leftPair[1]})`;
-    let p2 = `(${rightPair[0]},${rightPair[1]})`;
+    const isFifth = idx => idx === 4;
+    const renderPair = (pair, idxs) =>
+      renderMiniDice(pair[0], isFifth(idxs[0])) + renderMiniDice(pair[1], isFifth(idxs[1]));
 
-    if (leftPair[0] === leftPair[1]) p1 = `<span class="pasch">${p1}</span>`;
-    if (rightPair[0] === rightPair[1]) p2 = `<span class="pasch">${p2}</span>`;
+    const pair1HTML = renderPair(leftPair, s.idx.pair1);
+    const pair2HTML = renderPair(rightPair, s.idx.pair2);
 
-    text += `${p1} & ${p2}: ${sum1}, ${sum2}\n`;
+    text += `${pair1HTML} & ${pair2HTML}: ${sum1}, ${sum2}<br>`;
   });
 
   return text;
     }
 
+function renderMiniDice(value, isFifth = false) {
+  const pipsMap = {
+    1: [['p1']],
+    2: [['p2'], ['p3']],
+    3: [['p2'], ['p1'], ['p3']],
+    4: [['p2'], ['p4'], ['p5'], ['p3']],
+    5: [['p2'], ['p4'], ['p1'], ['p5'], ['p3']],
+    6: [['p2'], ['p4'], ['p5'], ['p3'], ['p6'], ['p7']]
+  };
+
+  const pipHTML = pipsMap[value].map(clsArr =>
+    `<div class="pip ${clsArr.join(' ')}"></div>`).join('');
+
+  const classes = `face mini-face${isFifth ? ' is-fifth' : ''}`;
+  return `<div class="mini-dice">${pipHTML}</div>`;
+}
+    
     // ---------- Hauptaktion ----------
     function rollAndCalc() {
   const values = rollValues(5);
