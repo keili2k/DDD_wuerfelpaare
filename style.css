@@ -1,0 +1,154 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 2em;
+  text-align: center;
+}
+.dice-row {
+  display: flex;
+  gap: 22px;
+  justify-content: center;
+  margin-bottom: 22px;
+}
+.scene {
+  width: 64px;
+  height: 64px;
+  perspective: 700px;
+}
+.dice {
+  width: 64px;
+  height: 64px;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 900ms cubic-bezier(.2,.7,.2,1);
+  margin: 0 auto;
+}
+.face {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  background: #fff;
+  border: 2px solid #222;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 700 20px/1 system-ui, Arial, sans-serif;
+  box-shadow: inset 0 0 20px rgba(0,0,0,.06);
+  color: #000;
+}
+/* Flächen positionieren (Kantenlänge 64 -> translateZ 32) */
+.front  { transform: rotateY(0deg)   translateZ(32px); }
+.back   { transform: rotateY(180deg) translateZ(32px); }
+.right  { transform: rotateY(90deg)  translateZ(32px); }
+.left   { transform: rotateY(-90deg) translateZ(32px); }
+.top    { transform: rotateX(90deg)  translateZ(32px); }
+.bottom { transform: rotateX(-90deg) translateZ(32px); }
+
+/* 5. Würfel schwarz mit weißer Zahl */
+.is-fifth .face {
+  background: #000;
+  color: #fff;
+  border: 2px solid #fff;
+}
+
+button {
+  margin-top: 10px;
+  padding: 10px 18px;
+  font-size: 16px;
+  cursor: pointer;
+}
+#values {
+  margin-top: 12px;
+  font-weight: 600;
+}
+#result {
+  margin-top: 24px;
+  white-space: pre-line;
+  text-align: left;
+  display: inline-block;
+}
+.pasch {
+  color: #d00;
+  font-weight: 800;
+}
+.pip {
+  width: 10px;
+  height: 10px;
+  background: currentColor;
+  border-radius: 50%;
+  position: absolute;
+}
+
+/* Zentrierte Pip-Positionen */
+.p1 { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+.p2 { top: 25%; left: 25%; transform: translate(-50%, -50%); }
+.p3 { top: 75%; left: 75%; transform: translate(-50%, -50%); }
+.p4 { top: 25%; left: 75%; transform: translate(-50%, -50%); }
+.p5 { top: 75%; left: 25%; transform: translate(-50%, -50%); }
+.p6 { top: 50%; left: 25%; transform: translate(-50%, -50%); }
+.p7 { top: 50%; left: 75%; transform: translate(-50%, -50%); }
+
+list2 {
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: opacity 0.6s ease, max-height 0.6s ease;
+}
+
+list2.show {
+  opacity: 1;
+  max-height: 1000px;
+}
+
+body.dark {
+  background-color: #121212;
+  color: #f0f0f0;
+}
+
+body.dark .face {
+  background: #333;
+  border-color: #888;
+  color: #f0f0f0;
+}
+
+body.dark .is-fifth .face {
+  background: #000;
+  border-color: #fff;
+  color: #fff;
+}
+
+body.dark .pip {
+  background: #f0f0f0;
+}
+
+button#toggleDark {
+  margin-bottom: 20px;
+}
+
+.mini-dice {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  background: #fff;
+  border: 1px solid #222;
+  border-radius: 6px;
+  display: inline-block;
+  margin: 0 4px;
+  box-shadow: inset 0 0 10px rgba(0,0,0,.06);
+}
+
+body.dark .mini-dice {
+  background: #333;
+  border-color: #888;
+}
+
+.is-fifth .mini-dice {
+  background: #000;
+  border-color: #fff;
+  color: #fff;
+}
+
+.mini-dice .pip {
+  width: 6px;
+  height: 6px;
+  }
