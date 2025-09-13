@@ -2,11 +2,370 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <title>Drehbare Würfel + Paarsummen (5. Würfel schwarz)</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>Drehbare Würfel + Paarsummen mit Wahrscheinlichkeiten</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2em;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .dice-row {
+      display: flex;
+      gap: 22px;
+      justify-content: center;
+      margin-bottom: 22px;
+    }
+
+    .scene {
+      width: 64px;
+      height: 64px;
+      perspective: 700px;
+    }
+
+    .dice {
+      width: 64px;
+      height: 64px;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 900ms cubic-bezier(.2,.7,.2,1);
+      margin: 0 auto;
+    }
+
+    .face {
+      position: absolute;
+      width: 64px;
+      height: 64px;
+      background: #fff;
+      border: 2px solid #222;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font: 700 20px/1 system-ui, Arial, sans-serif;
+      box-shadow: inset 0 0 20px rgba(0,0,0,.06);
+      color: #000;
+    }
+
+    /* Flächen positionieren (Kantenlänge 64 -> translateZ 32) */
+    .front  { transform: rotateY(0deg)   translateZ(32px); }
+    .back   { transform: rotateY(180deg) translateZ(32px); }
+    .right  { transform: rotateY(90deg)  translateZ(32px); }
+    .left   { transform: rotateY(-90deg) translateZ(32px); }
+    .top    { transform: rotateX(90deg)  translateZ(32px); }
+    .bottom { transform: rotateX(-90deg) translateZ(32px); }
+
+    /* 5. Würfel schwarz mit weißer Zahl */
+    .is-fifth .face {
+      background: #000;
+      color: #fff;
+      border: 2px solid #fff;
+    }
+
+    button {
+      margin: 10px;
+      padding: 10px 18px;
+      font-size: 16px;
+      cursor: pointer;
+      border: 2px solid #333;
+      background: #fff;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background: #f0f0f0;
+      transform: translateY(-2px);
+    }
+
+    #values {
+      margin-top: 12px;
+      font-weight: 600;
+      font-size: 18px;
+    }
+
+    #result {
+      margin-top: 24px;
+      text-align: left;
+      display: inline-block;
+      max-width: 800px;
+    }
+
+    .pasch {
+      color: #d00;
+      font-weight: 800;
+    }
+
+    .pip {
+      width: 10px;
+      height: 10px;
+      background: currentColor;
+      border-radius: 50%;
+      position: absolute;
+    }
+
+    /* Zentrierte Pip-Positionen */
+    .p1 { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    .p2 { top: 25%; left: 25%; transform: translate(-50%, -50%); }
+    .p3 { top: 75%; left: 75%; transform: translate(-50%, -50%); }
+    .p4 { top: 25%; left: 75%; transform: translate(-50%, -50%); }
+    .p5 { top: 75%; left: 25%; transform: translate(-50%, -50%); }
+    .p6 { top: 50%; left: 25%; transform: translate(-50%, -50%); }
+    .p7 { top: 50%; left: 75%; transform: translate(-50%, -50%); }
+
+    #list2 {
+      opacity: 0;
+      max-height: 0;
+      overflow: hidden;
+      transition: opacity 0.6s ease, max-height 0.6s ease;
+    }
+
+    #list2.show {
+      opacity: 1;
+      max-height: 1000px;
+    }
+
+    body.dark {
+      background-color: #121212;
+      color: #f0f0f0;
+    }
+
+    body.dark .face {
+      background: #333;
+      border-color: #888;
+      color: #f0f0f0;
+    }
+
+    body.dark .is-fifth .face {
+      background: #000;
+      border-color: #fff;
+      color: #fff;
+    }
+
+    body.dark .pip {
+      background: #f0f0f0;
+    }
+
+    body.dark button {
+      background: #333;
+      color: #f0f0f0;
+      border-color: #666;
+    }
+
+    body.dark button:hover {
+      background: #444;
+    }
+
+    .mini-dice {
+      position: relative;
+      width: 64px;
+      height: 64px;
+      background: #fff;
+      border: 2px solid #222;
+      border-radius: 8px;
+      display: inline-block;
+      margin: 0 8px;
+      box-shadow: inset 0 0 20px rgba(0,0,0,.06);
+      vertical-align: middle;
+    }
+
+    body.dark .mini-dice {
+      background: #333;
+      border-color: #888;
+    }
+
+    .is-fifth .mini-dice {
+      background: #000;
+      border-color: #fff;
+      color: #fff;
+    }
+
+    .mini-dice .pip {
+      width: 10px;
+      height: 10px;
+    }
+
+    .pair-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 12px 0;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 12px;
+      border-left: 4px solid #007bff;
+      transition: all 0.3s ease;
+    }
+
+    .pair-line:hover {
+      background: #e9ecef;
+      transform: translateX(5px);
+    }
+
+    body.dark .pair-line {
+      background: #2d3748;
+      border-left-color: #4299e1;
+    }
+
+    body.dark .pair-line:hover {
+      background: #4a5568;
+    }
+
+    .pair-display {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .sum-display {
+      font-size: 20px;
+      font-weight: bold;
+      color: #495057;
+      min-width: 120px;
+    }
+
+    body.dark .sum-display {
+      color: #e2e8f0;
+    }
+
+    .probability-display {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      min-width: 100px;
+    }
+
+    .probability-fraction {
+      font-size: 16px;
+      font-weight: bold;
+      color: #007bff;
+      background: rgba(0, 123, 255, 0.1);
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+
+    .probability-percent {
+      font-size: 14px;
+      color: #6c757d;
+      background: #f8f9fa;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    body.dark .probability-fraction {
+      color: #4299e1;
+      background: rgba(66, 153, 225, 0.2);
+    }
+
+    body.dark .probability-percent {
+      color: #a0aec0;
+      background: #2d3748;
+    }
+
+    .section-title {
+      font-size: 24px;
+      font-weight: bold;
+      margin: 30px 0 20px 0;
+      color: #343a40;
+      border-bottom: 3px solid #007bff;
+      padding-bottom: 10px;
+    }
+
+    body.dark .section-title {
+      color: #e2e8f0;
+      border-bottom-color: #4299e1;
+    }
+
+    .stats-panel {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+      border-left: 4px solid #28a745;
+    }
+
+    body.dark .stats-panel {
+      background: #2d3748;
+      border-left-color: #48bb78;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .stat-item {
+      text-align: center;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    body.dark .stat-item {
+      background: #4a5568;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: bold;
+      color: #007bff;
+      display: block;
+    }
+
+    body.dark .stat-value {
+      color: #4299e1;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: #6c757d;
+      margin-top: 5px;
+    }
+
+    body.dark .stat-label {
+      color: #a0aec0;
+    }
+
+    .controls {
+      margin: 20px 0;
+    }
+
+    .controls label {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0 15px;
+    }
+
+    .controls input[type="checkbox"] {
+      transform: scale(1.3);
+      margin-right: 8px;
+    }
+
+    .roll-instruction {
+      font-size: 18px;
+      color: #6c757d;
+      margin: 20px 0;
+      font-style: italic;
+    }
+
+    body.dark .roll-instruction {
+      color: #a0aec0;
+    }
+  </style>
 </head>
 <body>
-  <button id="toggleDark">Darkmode aktivieren</button>
+  <h1>🎲 Drehbare Würfel + Paarsummen mit Wahrscheinlichkeiten</h1>
+  
+  <button id="toggleDark">🌙 Darkmode aktivieren</button>
+  <button id="rollButton" onclick="rollAndCalc()">🎲 Würfeln</button>
+  
+  <p class="roll-instruction">Klicken Sie auf die Würfel oder den Würfeln-Button, um zu starten!</p>
+  
   <div class="dice-row" onclick="rollAndCalc()">
     <div class="scene"><div class="dice" id="d1"></div></div>
     <div class="scene"><div class="dice" id="d2"></div></div>
@@ -14,18 +373,333 @@
     <div class="scene"><div class="dice" id="d4"></div></div>
     <div class="scene"><div class="dice is-fifth" id="dice5"></div></div>
   </div>
-  <div>
+  
+  <div class="controls">
     <label>
       <input type="checkbox" id="toggleFifth" checked />
-      Kombinationen des 5. Würfel ausblenden
+      Kombinationen des 5. Würfels ausblenden
     </label>
   </div>
+  
   <div id="values" style="display:none;"></div>
+  
   <div id="result">
+    <div id="stats"></div>
     <div id="list1"></div>
     <div id="list2"></div>
   </div>
 
-  <script src="script.js"></script>
+  <script>
+    let lastValues = [];
+    let lastSplits5unique = [];
+    let allPossibleSplits4 = [];
+    let allPossibleSplits5 = [];
+
+    // Berechne alle möglichen Kombinationen für Wahrscheinlichkeiten
+    function calculateAllPossibleSplits() {
+      allPossibleSplits4 = [];
+      allPossibleSplits5 = [];
+      
+      // Alle Kombinationen für 4 Würfel
+      for (let a = 1; a <= 6; a++) {
+        for (let b = 1; b <= 6; b++) {
+          for (let c = 1; c <= 6; c++) {
+            for (let d = 1; d <= 6; d++) {
+              const splits = getSplits([a, b, c, d]);
+              allPossibleSplits4.push(...splits.map(s => s.key));
+            }
+          }
+        }
+      }
+      
+      // Alle Kombinationen für 5 Würfel (nur die zusätzlichen durch Würfel 5)
+      for (let a = 1; a <= 6; a++) {
+        for (let b = 1; b <= 6; b++) {
+          for (let c = 1; c <= 6; c++) {
+            for (let d = 1; d <= 6; d++) {
+              for (let e = 1; e <= 6; e++) {
+                const arr4 = [a, b, c, d];
+                const arr5 = [a, b, c, d, e];
+                const splits4 = getSplits(arr4);
+                const set4 = new Set(splits4.map(s => s.key));
+                const splits5all = getSplits(arr5);
+                
+                const splits5unique = splits5all.filter(s => {
+                  const uses5 = s.idx.pair1.includes(4) || s.idx.pair2.includes(4);
+                  return uses5 && !set4.has(s.key);
+                });
+                
+                allPossibleSplits5.push(...splits5unique.map(s => s.key));
+              }
+            }
+          }
+        }
+      }
+    }
+
+    function gcd(a, b) {
+      while (b !== 0) {
+        let temp = b;
+        b = a % b;
+        a = temp;
+      }
+      return a;
+    }
+
+    function simplifyFraction(numerator, denominator) {
+      const divisor = gcd(numerator, denominator);
+      return {
+        num: numerator / divisor,
+        den: denominator / divisor
+      };
+    }
+
+    function calculateProbability(splitKey, allSplits) {
+      const count = allSplits.filter(key => key === splitKey).length;
+      const total = allSplits.length;
+      const fraction = simplifyFraction(count, total);
+      const percentage = ((count / total) * 100).toFixed(1);
+      
+      return {
+        fraction: fraction,
+        percentage: percentage,
+        count: count,
+        total: total
+      };
+    }
+
+    function createDice(id) {
+      const dice = document.getElementById(id);
+      const faces = ['front','back','right','left','top','bottom'];
+      const pipsMap = {
+        1: [['p1']],
+        2: [['p2'], ['p3']],
+        3: [['p2'], ['p1'], ['p3']],
+        4: [['p2'], ['p4'], ['p5'], ['p3']],
+        5: [['p2'], ['p4'], ['p1'], ['p5'], ['p3']],
+        6: [['p2'], ['p4'], ['p5'], ['p3'], ['p6'], ['p7']]
+      };
+
+      for (let i = 0; i < 6; i++) {
+        const value = i + 1;
+        const div = document.createElement('div');
+        div.className = "face " + faces[i];
+
+        pipsMap[value].forEach(clsArr => {
+          const pip = document.createElement('div');
+          pip.className = 'pip ' + clsArr.join(' ');
+          div.appendChild(pip);
+        });
+
+        dice.appendChild(div);
+      }
+      dice.style.transform = "rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
+    }
+    ['d1','d2','d3','d4','dice5'].forEach(createDice);
+
+    function orientationForFrontValue(v) {
+      switch (v) {
+        case 1: return { x: 0,   y: 0,   z: 0   };
+        case 2: return { x: 0,   y: 180, z: 0   };
+        case 3: return { x: 0,   y: -90, z: 0   };
+        case 4: return { x: 0,   y: 90,  z: 0   };
+        case 5: return { x: -90, y: 0,   z: 0   };
+        case 6: return { x: 90,  y: 0,   z: 0   };
+        default: return { x: 0, y: 0, z: 0 };
+      }
+    }
+
+    function extraSpins() {
+      const r = () => 360 * Math.floor(Math.random() * 3);
+      return { x: r(), y: r(), z: r() };
+    }
+
+    function animateDiceToValue(id, value) {
+      const el = document.getElementById(id);
+      const base = orientationForFrontValue(value);
+      const add  = extraSpins();
+      el.style.transform = `rotateX(${base.x + add.x}deg) rotateY(${base.y + add.y}deg) rotateZ(${base.z + add.z}deg)`;
+    }
+
+    function rollValues(n) {
+      return Array.from({length: n}, () => 1 + Math.floor(Math.random()*6));
+    }
+
+    function getSplits(arr) {
+      const n = arr.length, out = [], seen = new Set();
+      for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+          for (let k = 0; k < n; k++) {
+            if (k === i || k === j) continue;
+            for (let l = k + 1; l < n; l++) {
+              if (l === i || l === j) continue;
+              const pair1 = [arr[i], arr[j]], pair2 = [arr[k], arr[l]];
+              const p1k = [...pair1].sort((a,b)=>a-b).join('-');
+              const p2k = [...pair2].sort((a,b)=>a-b).join('-');
+              const key = [p1k, p2k].sort().join('|');
+              if (!seen.has(key)) {
+                seen.add(key);
+                out.push({ pair1, pair2, key, idx: { pair1:[i,j], pair2:[k,l] } });
+              }
+            }
+          }
+        }
+      }
+      return out;
+    }
+
+    function formatSplitsWithProbability(splits, allSplits) {
+      splits.sort((a, b) => {
+        const minA = Math.min(a.pair1[0] + a.pair1[1], a.pair2[0] + a.pair2[1]);
+        const minB = Math.min(b.pair1[0] + b.pair1[1], b.pair2[0] + b.pair2[1]);
+        return minA - minB;
+      });
+
+      let html = '';
+      splits.forEach(s => {
+        let sum1 = s.pair1[0] + s.pair1[1];
+        let sum2 = s.pair2[0] + s.pair2[1];
+
+        let leftPair = s.pair1, rightPair = s.pair2;
+        let leftIdx = s.idx.pair1, rightIdx = s.idx.pair2;
+        if (sum1 > sum2) {
+          [leftPair, rightPair] = [rightPair, leftPair];
+          [leftIdx, rightIdx] = [rightIdx, leftIdx];
+          [sum1, sum2] = [sum2, sum1];
+        }
+
+        const isFifth = idx => idx === 4;
+        const renderPair = (pair, idxs) =>
+          renderMiniDice(pair[0], isFifth(idxs[0])) + renderMiniDice(pair[1], isFifth(idxs[1]));
+
+        const pair1HTML = renderPair(leftPair, leftIdx);
+        const pair2HTML = renderPair(rightPair, rightIdx);
+
+        const probability = calculateProbability(s.key, allSplits);
+
+        html += `
+          <div class="pair-line">
+            <div class="pair-display">
+              ${pair1HTML} ${pair2HTML}
+            </div>
+            <div class="sum-display">
+              ${sum1}, ${sum2}
+            </div>
+            <div class="probability-display">
+              <div class="probability-fraction">${probability.fraction.num}/${probability.fraction.den}</div>
+              <div class="probability-percent">${probability.percentage}%</div>
+            </div>
+          </div>
+        `;
+      });
+
+      return html;
+    }
+
+    function renderMiniDice(value, isFifth = false) {
+      const pipsMap = {
+        1: [['p1']],
+        2: [['p2'], ['p3']],
+        3: [['p2'], ['p1'], ['p3']],
+        4: [['p2'], ['p4'], ['p5'], ['p3']],
+        5: [['p2'], ['p4'], ['p1'], ['p5'], ['p3']],
+        6: [['p2'], ['p4'], ['p5'], ['p3'], ['p6'], ['p7']]
+      };
+
+      const pipHTML = pipsMap[value].map(clsArr =>
+        `<div class="pip ${clsArr.join(' ')}"></div>`).join('');
+
+      return `<div class="mini-dice${isFifth ? ' is-fifth' : ''}">${pipHTML}</div>`;
+    }
+
+    function rollAndCalc() {
+      const values = rollValues(5);
+      lastValues = values;
+
+      ['d1','d2','d3','d4','dice5'].forEach((id, idx) => animateDiceToValue(id, values[idx]));
+
+      document.getElementById("values").textContent = "Ergebnisse: " + values.join(", ");
+      document.getElementById("values").style.display = "block";
+
+      const arr4 = values.slice(0,4);
+      const arr5 = values.slice();
+      const splits4 = getSplits(arr4);
+      const set4    = new Set(splits4.map(s => s.key));
+      const splits5all = getSplits(arr5);
+
+      lastSplits5unique = splits5all.filter(s => {
+        const uses5 = s.idx.pair1.includes(4) || s.idx.pair2.includes(4);
+        return uses5 && !set4.has(s.key);
+      });
+
+      // Statistiken anzeigen
+      const totalCombinations4 = 6 ** 4;
+      const totalCombinations5 = 6 ** 5;
+      
+      document.getElementById("stats").innerHTML = `
+        <div class="stats-panel">
+          <h3>📊 Statistiken</h3>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <span class="stat-value">${splits4.length}</span>
+              <div class="stat-label">Gefundene Paare (4 Würfel)</div>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">${lastSplits5unique.length}</span>
+              <div class="stat-label">Zusätzliche Paare (5. Würfel)</div>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">${totalCombinations4}</span>
+              <div class="stat-label">Mögliche 4-Würfel Kombinationen</div>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">${totalCombinations5}</span>
+              <div class="stat-label">Mögliche 5-Würfel Kombinationen</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById("list1").innerHTML =
+        '<div class="section-title">🎯 Liste 1 (nur Würfel 1–4)</div>' + 
+        formatSplitsWithProbability(splits4, allPossibleSplits4);
+
+      updateFifthDisplay();
+    }
+
+    document.getElementById("toggleFifth").addEventListener("change", updateFifthDisplay);
+
+    function updateFifthDisplay() {
+      const list2 = document.getElementById("list2");
+      const showFifth = !document.getElementById("toggleFifth").checked;
+
+      if (showFifth && lastSplits5unique.length > 0) {
+        list2.innerHTML =
+          '<div class="section-title">🎲 Liste 2 (zusätzlich durch Würfel 5)</div>' +
+          formatSplitsWithProbability(lastSplits5unique, allPossibleSplits5);
+        list2.classList.add("show");
+      } else {
+        list2.classList.remove("show");
+        list2.innerHTML = "";
+      }
+    }
+
+    document.getElementById("toggleDark").addEventListener("click", () => {
+      document.body.classList.toggle("dark");
+
+      const btn = document.getElementById("toggleDark");
+      if (document.body.classList.contains("dark")) {
+        btn.textContent = "🌞 Darkmode deaktivieren";
+      } else {
+        btn.textContent = "🌙 Darkmode aktivieren";
+      }
+    });
+
+    // Berechne alle möglichen Kombinationen beim Laden
+    calculateAllPossibleSplits();
+
+    // Erste Anzeige
+    rollAndCalc();
+  </script>
 </body>
 </html>
