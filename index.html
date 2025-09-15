@@ -356,6 +356,150 @@
     body.dark .roll-instruction {
       color: #a0aec0;
     }
+
+    /* Pasch-Hervorhebung */
+    .mini-dice.pasch {
+      background: #dc3545 !important;
+      border-color: #b02a37 !important;
+      color: white !important;
+      box-shadow: 0 0 15px rgba(220, 53, 69, 0.5) !important;
+    }
+
+    body.dark .mini-dice.pasch {
+      background: #ff6b6b !important;
+      border-color: #ff5252 !important;
+      color: white !important;
+      box-shadow: 0 0 15px rgba(255, 107, 107, 0.6) !important;
+    }
+
+    .mini-dice.pasch .pip {
+      background: white !important;
+    }
+
+    /* Countdown Timer */
+    .countdown-container {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+      border-left: 4px solid #6f42c1;
+    }
+
+    body.dark .countdown-container {
+      background: #2d3748;
+      border-left-color: #9f7aea;
+    }
+
+    .countdown-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+
+    .countdown-display {
+      font-size: 48px;
+      font-weight: bold;
+      text-align: center;
+      margin: 20px 0;
+      color: #6f42c1;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    body.dark .countdown-display {
+      color: #9f7aea;
+    }
+
+    .countdown-display.warning {
+      color: #ffc107;
+      animation: pulse 1s infinite;
+    }
+
+    .countdown-display.danger {
+      color: #dc3545;
+      animation: pulse 0.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .time-selector {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .time-selector select {
+      padding: 8px 12px;
+      border: 2px solid #6f42c1;
+      border-radius: 8px;
+      font-size: 16px;
+      background: white;
+      color: #6f42c1;
+      cursor: pointer;
+    }
+
+    body.dark .time-selector select {
+      background: #4a5568;
+      border-color: #9f7aea;
+      color: #9f7aea;
+    }
+
+    .timer-button {
+      background: #6f42c1;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .timer-button:hover {
+      background: #5a2d8b;
+      transform: translateY(-2px);
+    }
+
+    .timer-button:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    body.dark .timer-button {
+      background: #9f7aea;
+    }
+
+    body.dark .timer-button:hover {
+      background: #805ad5;
+    }
+
+    .timer-status {
+      text-align: center;
+      font-size: 18px;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+
+    .timer-status.running {
+      color: #28a745;
+    }
+
+    .timer-status.finished {
+      color: #dc3545;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0.3; }
+    }
   </style>
 </head>
 <body>
@@ -363,6 +507,25 @@
   
   <button id="toggleDark">🌙 Darkmode aktivieren</button>
   <button id="rollButton" onclick="rollAndCalc()">🎲 Würfeln</button>
+  
+  <div class="countdown-container">
+    <div class="countdown-controls">
+      <div class="time-selector">
+        <label for="timerSelect">⏱️ Timer:</label>
+        <select id="timerSelect">
+          <option value="60">1 Minute</option>
+          <option value="120">2 Minuten</option>
+          <option value="180">3 Minuten</option>
+          <option value="240">4 Minuten</option>
+          <option value="300">5 Minuten</option>
+        </select>
+      </div>
+      <button id="startTimer" class="timer-button">⏰ Timer starten</button>
+      <button id="stopTimer" class="timer-button" disabled>⏹️ Timer stoppen</button>
+    </div>
+    <div class="countdown-display" id="countdownDisplay">--:--</div>
+    <div class="timer-status" id="timerStatus">Timer bereit</div>
+  </div>
   
   <p class="roll-instruction">Klicken Sie auf die Würfel oder den Würfeln-Button, um zu starten!</p>
   
@@ -568,12 +731,16 @@
           [sum1, sum2] = [sum2, sum1];
         }
 
-        const isFifth = idx => idx === 4;
-        const renderPair = (pair, idxs) =>
-          renderMiniDice(pair[0], isFifth(idxs[0])) + renderMiniDice(pair[1], isFifth(idxs[1]));
+        // Prüfen ob Pasch vorliegt
+        const isPasch1 = leftPair[0] === leftPair[1];
+        const isPasch2 = rightPair[0] === rightPair[1];
 
-        const pair1HTML = renderPair(leftPair, leftIdx);
-        const pair2HTML = renderPair(rightPair, rightIdx);
+        const isFifth = idx => idx === 4;
+        const renderPair = (pair, idxs, isPasch) =>
+          renderMiniDice(pair[0], isFifth(idxs[0]), isPasch) + renderMiniDice(pair[1], isFifth(idxs[1]), isPasch);
+
+        const pair1HTML = renderPair(leftPair, leftIdx, isPasch1);
+        const pair2HTML = renderPair(rightPair, rightIdx, isPasch2);
 
         const probability = calculateProbability(s.key, allSplits);
 
@@ -596,7 +763,7 @@
       return html;
     }
 
-    function renderMiniDice(value, isFifth = false) {
+    function renderMiniDice(value, isFifth = false, isPasch = false) {
       const pipsMap = {
         1: [['p1']],
         2: [['p2'], ['p3']],
@@ -609,7 +776,11 @@
       const pipHTML = pipsMap[value].map(clsArr =>
         `<div class="pip ${clsArr.join(' ')}"></div>`).join('');
 
-      return `<div class="mini-dice${isFifth ? ' is-fifth' : ''}">${pipHTML}</div>`;
+      let classes = 'mini-dice';
+      if (isFifth) classes += ' is-fifth';
+      if (isPasch) classes += ' pasch';
+
+      return `<div class="${classes}">${pipHTML}</div>`;
     }
 
     function rollAndCalc() {
@@ -694,6 +865,105 @@
         btn.textContent = "🌙 Darkmode aktivieren";
       }
     });
+
+    // Timer-Funktionalität
+    let countdownTimer = null;
+    let remainingTime = 0;
+    let isTimerRunning = false;
+
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function updateCountdownDisplay() {
+      const display = document.getElementById('countdownDisplay');
+      const status = document.getElementById('timerStatus');
+      
+      display.textContent = formatTime(remainingTime);
+      
+      // Farbwechsel je nach verbleibender Zeit
+      display.className = 'countdown-display';
+      if (remainingTime <= 10 && remainingTime > 0) {
+        display.className += ' danger';
+      } else if (remainingTime <= 30 && remainingTime > 0) {
+        display.className += ' warning';
+      }
+      
+      if (remainingTime <= 0) {
+        display.textContent = '00:00';
+        status.textContent = '⏰ Zeit abgelaufen!';
+        status.className = 'timer-status finished';
+        
+        // Timer beenden
+        clearInterval(countdownTimer);
+        isTimerRunning = false;
+        document.getElementById('startTimer').disabled = false;
+        document.getElementById('stopTimer').disabled = true;
+        
+        // Akustisches Signal (falls Browser es unterstützt)
+        try {
+          const audio = new AudioContext();
+          const oscillator = audio.createOscillator();
+          const gainNode = audio.createGain();
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(audio.destination);
+          
+          oscillator.frequency.value = 800;
+          oscillator.type = 'sine';
+          
+          gainNode.gain.setValueAtTime(0.3, audio.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audio.currentTime + 1);
+          
+          oscillator.start(audio.currentTime);
+          oscillator.stop(audio.currentTime + 1);
+        } catch(e) {
+          // Fallback: Browser unterstützt kein Audio
+          console.log('Audio nicht verfügbar');
+        }
+      }
+    }
+
+    function startTimer() {
+      const selectedTime = parseInt(document.getElementById('timerSelect').value);
+      remainingTime = selectedTime;
+      isTimerRunning = true;
+      
+      document.getElementById('startTimer').disabled = true;
+      document.getElementById('stopTimer').disabled = false;
+      document.getElementById('timerStatus').textContent = '⏳ Timer gestartet!';
+      document.getElementById('timerStatus').className = 'timer-status running';
+      
+      updateCountdownDisplay();
+      
+      countdownTimer = setInterval(() => {
+        remainingTime--;
+        updateCountdownDisplay();
+        
+        if (remainingTime <= 0) {
+          clearInterval(countdownTimer);
+        }
+      }, 1000);
+    }
+
+    function stopTimer() {
+      clearInterval(countdownTimer);
+      isTimerRunning = false;
+      remainingTime = 0;
+      
+      document.getElementById('startTimer').disabled = false;
+      document.getElementById('stopTimer').disabled = true;
+      document.getElementById('countdownDisplay').textContent = '--:--';
+      document.getElementById('countdownDisplay').className = 'countdown-display';
+      document.getElementById('timerStatus').textContent = 'Timer bereit';
+      document.getElementById('timerStatus').className = 'timer-status';
+    }
+
+    // Event Listeners für Timer
+    document.getElementById('startTimer').addEventListener('click', startTimer);
+    document.getElementById('stopTimer').addEventListener('click', stopTimer);
 
     // Berechne alle möglichen Kombinationen beim Laden
     calculateAllPossibleSplits();
