@@ -1,0 +1,23 @@
+{
+  "name": "ddd-dice-sync-netlify",
+  "version": "1.0.0",
+  "description": "DDD Würfelpaare Sync mit Netlify Functions",
+  "main": "index.html",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo 'No build step required'",
+    "deploy": "netlify deploy --prod"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "netlify-cli": "^17.0.0"
+  },
+  "keywords": [
+    "dice",
+    "game",
+    "netlify-functions",
+    "synchronization"
+  ],
+  "author": "DDD Sync Team",
+  "license": "MIT"
+}
